@@ -1,154 +1,91 @@
+<?php
+    session_start();
+    $ip = "127.0.0.1";
+    $username = "root";
+    $password = "";
+    $database = "parchi";
+    $connection = new mysqli($ip, $username, $password, $database);
+    if ($connection->connect_error) {
+        die("Connection failed: " . $connection->connect_error);
+      }
+?>
+
 <!DOCTYPE html>
-<html>
-    <head>
-        <title>Parchi</title>
-    </head>
-    <body>
-    <script>
-function showUser(str) {
-  if (str=="") {
-    document.getElementById("txtHint").innerHTML="";
-    return;
-  }
-  var xmlhttp=new XMLHttpRequest();
-  
-  xmlhttp.onreadystatechange=function() {
-    if (this.readyState==4 && this.status==200) {
-      document.getElementById("txtHint").innerHTML=this.responseText;
-    }
-  }
-  xmlhttp.open("GET","document.URL&specie=+"+str,true);
-  xmlhttp.send();
-}
-</script>
-
-        <form method="GET" action="index.php">
-            <select name="parco_id">
-                <?php
-                $ip = '127.0.0.1';
-                $username = 'root';
-                $pwd = '';
-                $database = 'parchi';
-                $connection = new mysqli($ip, $username, $pwd, $database);
-
-                if ($connection->connect_error) {
-                    die('C\'è stato un errore: ' . $connection->connect_error);
-                }
-
-                // echo 'Database collegato';
-                $sql = 'SELECT nome, id, regione FROM parco';
-                $result = $connection->query($sql);
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kai_Guardaparco</title>
+</head>
+<body>
+    <form action="" method="get">
+        <select name="id_parco" id="id_parco">
+            <?php 
+                $query = "SELECT * FROM parco";
+                $result = $connection ->query($query);
+                var_dump($result);
                 if ($result->num_rows > 0) {
-                    while ($row = $result->fetch_assoc()) {
-                        if ($row['id'] == $_GET['parco_id']) {
-                            echo '<option selected value="' . $row['id'] . '">' . $row['nome'] . ' ' .$row['regione'] . '</option>';
-                        } else {
-                            echo '<option value="' . $row['id'] . '">' . $row['nome'] . $row['regione'] . '</option>';
-                        }
+                    
+                    while($row = $result->fetch_assoc()) {
+                        echo "<option value='" . $row["id"] . "'>" . $row["Nome"] . " " . $row["Regione"] . "</option>";
                     }
-                }
-            
-                ?>
-            </select>
-            <input type="submit" />
-        </form>
-            <select name="specie_id" onchange=showUser(this.value)>
-                <?php
-                if (isset($_REQUEST['parco_id'])) {
-                $ip = '127.0.0.1';
-                $username = 'root';
-                $pwd = '';
-                $database = 'parchi';
-                $connection = new mysqli($ip, $username, $pwd, $database);
-
-                if ($connection->connect_error) {
-                    die('C\'è stato un errore: ' . $connection->connect_error);
-                }
-
-                echo '<option>Specie</option>';
-                $sql = 'SELECT DISTINCT s.nome FROM animale a INNER JOIN parco p ON a.id_parco = '.$_REQUEST['parco_id'].' INNER JOIN specie s ON s.id_specie = a.id_specie;';
-                $result = $connection->query($sql);
-
-                if ($result->num_rows > 0) {
-                    while ($row = $result->fetch_assoc()) {
-                        echo '<option value="' . $row['nome'] . '">' . $row['nome'] . '</option>';
-                    }
-                }
                 }
             ?>
-                
-            </select>
-        </form>
-
-        <form method="GET" action="index.php">
-            <select name="animale_id">
-                <?php
-                $message=$_SERVER['QUERY_STRING'];
-                $nome_animale=null;
-                echo $message;
-                if(str_contains($message,'specie')==true){
-                   
-                    $nome_animale=explode('=',$message)[3];
-                     echo $nome_animale;
-                    
-                }
-                if ( $nome_animale!=null){
-
-
-                    $ip = '127.0.0.1';
-                    $username = 'root';
-                    $pwd = '';
-                    $database = 'parchi';
-                    $connection = new mysqli($ip, $username, $pwd, $database);
-    
-                    if ($connection->connect_error) {
-                        die('C\'è stato un errore: ' . $connection->connect_error);
-                    }
-    
-                    // echo 'Database collegato';
-                    $sql = 'SELECT a.id_animale, a.data_nascita, a.sesso, a.stato_salute, s.nome FROM animale a INNER JOIN parco p ON a.id_parco = '.$_REQUEST['parco_id'].' INNER JOIN specie s ON s.id_specie = a.id_specie';
-                    $result = $connection->query($sql);
-    
+        </select>
+        <input type="submit" value="inviaParco">
+    </form>
+    <form action="" method="get">
+        <select name="id_specie" id="id_specie">
+            <option value="" selected disabled hidden>Seleziona specie</option>
+            <?php
+                if(isset($_GET["id_parco"])){
+                    $_SESSION["id_parco"] = $_GET["id_parco"];
+                    $query = "SELECT id_animale, animale.id_specie, id_parco, nome  FROM animale INNER JOIN specie ON animale.id_specie = specie.id_specie WHERE id_parco = '" . $_GET['id_parco'] . "' GROUP BY nome";
+                    $result = $connection ->query($query);
                     if ($result->num_rows > 0) {
-                        while ($row = $result->fetch_assoc()) {
-                            if($row['id_animale'] == $_GET['animale_id']){
-                                echo '<option selected value="' . $row['id_animale'] . '">' . $row['data_nascita'] . ' ' . $row['sesso'] . ' ' . $row['stato_salute'] .'</option>';
-                            }else{
-                                echo '<option selected value="' . $row['id_animale'] . '">' . $row['data_nascita'] . ' ' . $row['sesso'] . ' ' . $row['stato_salute'] .'</option>';
-                            }
-                        
+                    
+                        while($row = $result->fetch_assoc()) {
+                            echo "<option value='" . $row["id_specie"] . "'>" . $row["nome"] . "</option>";
                         }
                     }
                 }
-               
-                
-            
-                ?>
-            </select>
-            <input type="submit" />
-        </form>
-
+            ?>
+        </select>
+        <input type="submit" value="inviaSpecie" onClick="clearcontent('contenuto')">
+    </form>
+    <div id="contenuto">
         <?php
-        if (isset($_REQUEST['parco_id'])){
-            $eta = 0;
-            $elements = 0;
-            $slq = 'SELECT data_nascita FROM animale WHERE id_specie ="' . $_REQUEST['parco_id'] . '"';
-            $result = $connection->query($slq);
-            if($result->num_rows > 0){
-                while($row = $result->fetch_assoc()){
-                    $data_nascita = new DateTime($row['data_nascita']);
-                    $data_oggi = new DateTime('00:00:00');
-                    $diff = $data_oggi->diff($data_nascita);
-                    $diff = $diff->format('%y');
-                    $eta = $eta + $diff;
-                    $elements++;
+            if(isset($_GET["id_specie"])){
+                $query = "SELECT * FROM animale WHERE id_parco = '" . $_SESSION["id_parco"] . "' AND id_specie = '" . $_GET['id_specie'] . "'";
+                $result = $connection ->query($query);
+                if ($result->num_rows > 0) {
+                    echo "<h1>Animali presenti " . $result->num_rows . "</h1>";
+                    
+                    while($row = $result->fetch_assoc()) {
+                        echo "<h4>" . "Nome: " . $row["nome_animale"] . "</h4>";
+                        echo "<p>" . "Data di nascita: " . $row["data_nascita"] . "</p>";
+                        echo "<p>" . "Sesso: " . $row["sesso"] . "</p>";
+                        echo "<p>" . "Stato salute: " . $row["stato_salute"] . "</p>";
+
+                    }
                 }
-                $media = $eta / $elements;
-                echo "Età media: " . round($media, 1) . "\n";
-                echo "Numero esemplari: " . $elements;
+                $query = "SELECT ROUND(AVG(YEAR(CURRENT_DATE) - YEAR(data_nascita))) AS media FROM animale WHERE id_parco = '" . $_SESSION['id_parco'] . "' AND id_specie = '" . $_GET['id_specie'] . "'";
+                $result = $connection ->query($query);
+                if ($result->num_rows > 0) {
+                   while($row = $result->fetch_assoc()) {
+                       echo "<h3> Età media: " . $row["media"] . "</h3>";
+                   }
+                }
             }
-        }
         ?>
-        <div id="txtHint"></div>
-    </body>
+    </div>
+    <script>
+        function clearcontent(elementID) {
+            document.getElementById(elementID).innerHTML = "";
+        }
+    </script>
+</body>
 </html>
+
+
